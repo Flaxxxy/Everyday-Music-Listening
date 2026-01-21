@@ -14,8 +14,7 @@ library(tidyverse)
 # Page 1
 
 ## {.sidebar}
-
-This is test, Fancy Graph will be there:
+bla bla bla
 
 ## Column 1 {width=60%}
 
