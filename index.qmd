@@ -1,6 +1,6 @@
 ---
-title: Everyday Music Listening
-author: John Ashley Burgoyne
+title: Nostalgia & Memory
+author: a
 format:
   dashboard:
     orientation: columns
@@ -49,6 +49,10 @@ country_analysis <- all_students %>%
   ) %>%
   filter(count > 6) %>%
   arrange(desc(count))
+
+international_students_individual <- international_students %>%
+  filter(row_number() %% 3 == 1)
+
 ```
 
 
@@ -125,6 +129,33 @@ These are the three graphs that are showing which Spotify features are most impo
 ### Row 2 {.tabset}
 
 ```{r}
+#| title: Nostalgia per participant
+
+international_students_individual <- international_students %>%
+  filter(row_number() %% 3 == 1) %>%  
+  
+  mutate(
+    score = as.numeric(substr(Q13, 1, 1)),
+    score_label = factor(score, levels = 1:5, 
+                         labels = c("Not at all", "Slightly", "Neutral", "Much", "Entirely"))
+  ) %>%
+  
+  select(respondent_id, Q13, score, score_label) 
+
+ggplot(international_students_individual, aes(x = score_label)) +
+  geom_bar(fill = "#D98236", color = "black", width = 0.6) + 
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5) + 
+  labs(
+    title = "Nostalgia Motivation per Participant (n = Total Participants)",
+    x = "To what extent is your Top 3 song listening driven by nostalgia?",
+    y = "Number of Students"
+  ) +
+  theme_minimal()
+```
+
+
+
+```{r}
 #| title: Energy
 ggplot(country_analysis, aes(x = reorder(Q7, avg_energy), y = avg_energy, fill = Q7)) +
   geom_bar(stat = "identity", width = 0.7) +
@@ -186,4 +217,30 @@ ggplot(country_analysis, aes(x = reorder(Q7, avg_speechiness), y = avg_speechine
 
 ```
 
-# Page 2
+# Research
+
+## 
+**Methodology** 
+
+This project combines survey data and Spotify audio features to explore everyday music listening among students in the Netherlands. Students completed an online survey reporting demographic information, listening habits, and their top three most frequently played songs. Spotify audio features for these songs were collected and aggregated by computing mean values per respondent, creating an individual-level musical profile. The dataset was cleaned by standardizing country labels, removing non-essential metadata, and separating respondents into Dutch and international groups to enable comparative analysis. The study employs descriptive statistics and visualizations to identify patterns rather than test causal relationships.
+
+
+
+
+## 
+**Discussion** 
+
+The findings suggest clear differences in how music functions for Dutch and international students, particularly in the role of home-country music and the audio characteristics of preferred songs. International students appear more likely to rely on music connected to their cultural background, supporting the idea that music can serve as a tool for emotional regulation and cultural continuity in a new environment. Variations in Spotify audio features across countries further indicate that musical preferences reflect broader cultural and social contexts. While exploratory, these patterns highlight the value of combining self-reported data with audio features to better understand the everyday role of music in student life.
+
+##
+
+
+
+**Results**
+
+The analysis reveals notable differences in music listening patterns between Dutch and international students, as well as meaningful variation across countries of origin. International students show a stronger tendency to listen to music from their home country compared to Dutch students, with a substantially higher proportion of their top-ranked songs originating outside the Netherlands. In contrast, Dutch students predominantly listen to international music rather than domestic Dutch music. Country-level comparisons of Spotify audio features further highlight differences in musical preferences: average energy and danceability scores vary across countries, suggesting distinct listening styles that may reflect cultural norms or lifestyle factors. Speechiness also differs between countries, indicating varying preferences for music with spoken-word elements. When aggregated at the respondent level, these audio features form consistent musical profiles that complement self-reported survey responses. Overall, the results demonstrate that combining survey data with Spotify audio features provides a richer understanding of how everyday music listening differs between student groups and cultural backgrounds, revealing patterns that would be difficult to detect using self-reported measures alone.
+
+
+
+
+# Survey & References 
