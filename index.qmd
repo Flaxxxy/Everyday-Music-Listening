@@ -150,7 +150,7 @@ When individuals move to a new country, they face the challenge of preserving th
 
 This leads to our Primary Research Problem: “Do international students lean into songs from their home country as a response to nostalgia and homesickness, or do they prioritize cultural integration by adopting the music of their new environment?”
 
-Using a Qualtrics survey, we gathered qualitative insights into participants’ emotional states, focusing on feelings of homesickness and their connection to heritage. By comparing a student’s top songs from their first year in the Netherlands to their current listening habits, we map the trajectory of cultural integration and observe whether nostalgia represents a permanent shift or a temporary phase that gives way to a more global or local musical palate.
+By analyzing students’ top-streamed songs together with their self-reported nostalgic motivations, we examine the role of music as an emotional anchor for international students in the Netherlands. We further assess whether international students rely more on home-country music than Dutch students, and whether this reliance is associated with nostalgia.
 
 ## Column 1 {width=60%} {.academic-row} 
 
@@ -738,6 +738,7 @@ ggplot(student_corr_data, aes(x = KM, y = home_count)) +
 ## Column 2 {height=300}
 
 ### Row 1 {height=270 .tabset}
+
 
 #### Taiwan
 ::: {=html}
