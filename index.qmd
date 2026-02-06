@@ -1,11 +1,20 @@
 ---
 title: Nostalgia & Memory
-author: a
+author: Denis Goncharov, Joris Luczak, Siao-tong Huang, Zarif Ar Rafi Sarian
 format:
   dashboard:
     orientation: columns
----
+    vertical-layout: flow
+    theme:
+      light: flatly
+      dark: darkly
+    mainfont: "Inter"
+    heading-font: "Playfair Display"
+    scrolling: false
+    css: styles.css
 
+---
+  
 ```{r setup}
 #| include: false
 library(tidyverse)
@@ -13,6 +22,8 @@ library(tidyverse)
 dutch_students <- read_csv("data_cleaned_dutch_final.csv")
 international_students  <- read_csv("data_cleaned_international_final.csv")
 all_students <- read_csv("merged_cleaned_final_fixed_Q11_Q12_reordered.csv")
+international_with_home <- read_csv("international_with_home_songs.csv")
+international_no_home <- read_csv("international_no_home_songs.csv")
 
 
 international_home_music = international_students[, c("Q11"), drop = FALSE]
@@ -53,29 +64,98 @@ country_analysis <- all_students %>%
 international_students_individual <- international_students %>%
   filter(row_number() %% 3 == 1)
 
+
+country_analysis <- all_students %>%
+  group_by(Q7) %>%
+  summarise(
+    avg_danceability = mean(Danceability, na.rm = TRUE),
+    min_danceability = min(Danceability, na.rm = TRUE),
+    max_danceability = max(Danceability, na.rm = TRUE),
+    
+    avg_energy = mean(Energy, na.rm = TRUE),
+    min_energy = min(Energy, na.rm = TRUE),
+    max_energy = max(Energy, na.rm = TRUE),
+    
+    avg_speechiness = mean(Speechiness, na.rm = TRUE),
+    min_speechiness = min(Speechiness, na.rm = TRUE),
+    max_speechiness = max(Speechiness, na.rm = TRUE),
+    
+    count = n() 
+  ) %>%
+  filter(count > 6) %>%
+  arrange(desc(count))
+
+
+countries <- unique(country_analysis$Q7)
+
+library(ggplot2)
+library(patchwork)
+library(RColorBrewer)
+
+
+countries <- unique(country_analysis$Q7)
+soft_palette <- brewer.pal(9, "RdPu")[2:6]
+colors <- colorRampPalette(soft_palette)(length(countries))
+names(colors) <- countries
+
+create_single_plot <- function(data, y_var, min_var, max_var, feature_name, use_full_scale = TRUE) {
+  
+  p <- ggplot(data, aes(x = reorder(Q7, .data[[y_var]]), y = .data[[y_var]], fill = Q7)) +
+    geom_bar(stat = "identity", width = 0.7, alpha = 0.85) +
+    geom_errorbar(aes(ymin = .data[[min_var]], ymax = .data[[max_var]]), 
+                  width = 0.3, color = "#444444") +
+    scale_fill_manual(values = colors) +
+    labs(
+      title = paste("Spotify", feature_name, "Analysis by Respondents' Country of Origin"),
+      subtitle = "Bars represent the mean; error bars indicate the range (Min-Max)",
+      y = "Score",
+      x = "Country"
+    ) +
+    theme_minimal(base_family = "serif") +
+    theme(
+      legend.position = "none",
+      plot.title = element_text(face = "bold", size = 16, hjust = 0.5), 
+      plot.subtitle = element_text(size = 11, hjust = 0.5, color = "grey30"), 
+      axis.text.y = element_text(size = 10)
+    )
+  
+  if(use_full_scale) {
+    p <- p + coord_flip(ylim = c(0, 1))
+  } else {
+    p <- p + coord_flip(ylim = c(0, 0.5)) 
+  }
+  
+  return(p)
+}
+
+plot_energy <- create_single_plot(country_analysis, "avg_energy", "min_energy", "max_energy", "Energy", TRUE)
+plot_danceability <- create_single_plot(country_analysis, "avg_danceability", "min_danceability", "max_danceability", "Danceability", TRUE)
+plot_speechiness <- create_single_plot(country_analysis, "avg_speechiness", "min_speechiness", "max_speechiness", "Speechiness", FALSE)
+
+
 ```
 
 
-# Page 1
+# Main Page
 
 ## {.sidebar}
 
-INTRODUCTION 
+### Introduction {.highlight-row}
 
-How does the music we listen to define us? 
+#### How does the music we listen to, define us? 
 
-Music is far more than a background element of daily life. it is a sophisticated tool for emotional regulation and a primary architect of personal identity. While clinical studies have often explored "music therapy" in controlled settings to address issues like self-esteem and depression, there is a growing need to understand how consuming music daily might function as a coping mechanism in the real world. For international students, this relationship with music becomes even more complex as they navigate the transition between two distinct cultural environments. 
+Music is far more than a background element of daily life; it is a tool for emotional regulation and a primary architect of personal identity. While clinical studies have explored “music therapy” in controlled settings, there is a growing need to understand how consuming music daily functions as a coping mechanism in the real world. For international students, this relationship becomes more complex as they navigate the transition between two cultural environments.
 
-When individuals move to a new country, they face the dual challenge of preserving their old self while attempting to integrate into a host society. This study thus addresses a fundamental tension in the international student experience which is, the pull of the familiar versus the push of the new. We propose that listening to cultural music while studying acts as a protective factor, increasing happiness and reducing the cognitive load of a new environment. Furthermore, we hypothesize a direct correlation between social integration and musical diversity, as students become more comfortable in the host country’s social circles, their playlists will increasingly reflect local or international genres. We also suggested that engaging with home-country music helps international students keep their memories of home vivid and lasting. Moreover, we anticipate that the move itself triggers a significant increase in the consumption of home-country music compared to when the student was living at home, driven primarily by the onset of nostalgia. 
+When individuals move to a new country, they face the challenge of preserving their old self while integrating into a host society. This study addresses the tension between the pull of the familiar and the push of the new. We propose that listening to cultural music while studying acts as a protective factor, increasing happiness and reducing the cognitive load of a new environment. We also anticipate that the move itself triggers an increase in the consumption of home-country music compared to when the student was living at home, driven primarily by nostalgia.
 
-This leads to our Primary Research Problem: “Do international students lean into songs from their home country as a response to nostalgia and homesickness, or do they prioritize cultural integration by adopting the music of their new environment?” 
+This leads to our Primary Research Problem: “Do international students lean into songs from their home country as a response to nostalgia and homesickness, or do they prioritize cultural integration by adopting the music of their new environment?”
 
-Using a Qualtrics Survey, we gathered qualitative insights into the emotional state of participants, specifically focusing on feelings of homesickness and if they are connected to their heritage. By comparing a student's top songs from their 1st year in the Netherlands to their current listening habits, we can map the trajectory of their cultural integration. This allows us to see if the feeling of nostalgia is a permanent shift or a temporary phase that eventually fades away to a give room for a more global or local musical palate. 
+Using a Qualtrics survey, we gathered qualitative insights into participants’ emotional states, focusing on feelings of homesickness and their connection to heritage. By comparing a student’s top songs from their first year in the Netherlands to their current listening habits, we map the trajectory of cultural integration and observe whether nostalgia represents a permanent shift or a temporary phase that gives way to a more global or local musical palate.
 
-## Column 1 {width=60%}
+## Column 1 {width=60%} {.academic-row} 
+
 
 ```{r}
-
 # calculate percentage for each group
 pie_summary <- plot_data %>%
   group_by(Group, label) %>%
@@ -87,160 +167,671 @@ ggplot(pie_summary, aes(x = 1, y = percentage, fill = label)) +
   geom_bar(stat = "identity", width = 1, color = "white", size = 0.8) +
   coord_polar("y", start = 0) +
   facet_wrap(~Group) +
-  theme_void(base_family = "serif") + 
-  scale_fill_manual(values = c("Home Country" = "#E67E22", "Other" = "#34495E")) +
+  theme_void(base_family = "serif") +
   
-  geom_text(aes(label = scales::percent(percentage, accuracy = 1)), 
-            position = position_stack(vjust = 0.5), 
-            color = "white", fontface = "bold", size = 5) +
+  # NEW palette
+  scale_fill_manual(values = c(
+    "Home Country" = "#e57373",  # coral pink
+    "Other" = "#6b4c7a"          # plum purple
+  )) +
+  
+  geom_text(
+    aes(label = scales::percent(percentage, accuracy = 1)),
+    position = position_stack(vjust = 0.5),
+    color = "white",
+    fontface = "bold",
+    size = 5
+  ) +
   
   labs(title = "Distribution of Music Origin in Top-Ranked Songs",
+       subtitle = expression(paste("Chi-square test results: ", chi^2, " = 4.66, ", italic(df), " = 1, ", italic(p), " = 0.031")),
        fill = "Origin of Music") +
+  
   theme(
-    plot.title = element_text(hjust = 0.5, face = "bold", size = 16, margin = margin(b = 20)),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16, margin = margin(b = 2)),
+    plot.subtitle = element_text(hjust = 0.5, size = 12, face = "italic", color = "grey30", margin = margin(t = 2, b = 15)),
     
     strip.placement = "outside",
-    strip.text = element_text(size = 15),
-    panel.spacing = unit(0.2, "lines"),
+    strip.text = element_text(size = 15, face = "bold"),
+    panel.spacing = unit(2, "lines"), 
     
-    # legend adjustment
     legend.position = "bottom",
     legend.title = element_text(face = "bold", size = 12),
     legend.text = element_text(size = 11),
-    legend.key.size = unit(0.5, "cm"),
-    
-    legend.box.background = element_rect(color = "black",linewidth = 0.5),
+    legend.box.background = element_rect(color = "black", linewidth = 0.5),
     legend.box.margin = margin(10, 10, 10, 10)
   ) +
-  
-  guides(fill = guide_legend(override.aes = list(color = NA, shape = 15)))
-
- 
+  guides(fill = guide_legend(override.aes = list(color = NA)))
 
 ```
+
 Preliminary data collection suggests that international students do maintain a stronger tie to their home-country music than their local Dutch counterparts. From the chart we see that that for international students, 28% of their Top 3 songs originate from their home country. In contrast, Dutch students showed a much lower reliance on domestic music, with only 12% of their top songs being Dutch and a staggering 88% consisting of international music. This 16% difference in song choice between international and Dutch students hint a little at the unique role home-country music plays for international students. It is essentially a tool to cope with the alien environment. 
+
+*Beyond the origin of the music, we analyzed the acoustic of the songs using Speechiness, Danceability, and Energy.*
+
 
 ## Column 2 {width=40%}
 
-### Row 1 
+### Row 1 {.highlight-row}
 
-These are the three graphs that are showing which Spotify features are most important among the countries.
+**Danceability:** Taiwan, Finland, and Ukraine show lower danceability, suggesting a preference for slower, melodic, atmospheric music, while Russia’s higher danceability may reflect using energetic rhythms to boost mood and counter homesickness.
 
-### Row 2 {.tabset}
+**Energy:** High-energy music functions as emotional catharsis; despite living abroad, students may rely on intense tracks to express feelings and regulate the stress of adapting to a new country.
 
-```{r}
-#| title: Nostalgia per participant
+**Speechiness:** Higher speechiness for Taiwan and Finland indicates a stronger role of spoken language in music, implying that lyrics and storytelling help students maintain a linguistic and emotional connection to home.
 
-international_students_individual <- international_students %>%
-  filter(row_number() %% 3 == 1) %>%  
-  
-  mutate(
-    score = as.numeric(substr(Q13, 1, 1)),
-    score_label = factor(score, levels = 1:5, 
-                         labels = c("Not at all", "Slightly", "Neutral", "Much", "Entirely"))
-  ) %>%
-  
-  select(respondent_id, Q13, score, score_label) 
-
-ggplot(international_students_individual, aes(x = score_label)) +
-  geom_bar(fill = "#D98236", color = "black", width = 0.6) + 
-  geom_text(stat='count', aes(label=..count..), vjust=-0.5) + 
-  labs(
-    title = "Nostalgia Motivation per Participant (n = Total Participants)",
-    x = "To what extent is your Top 3 song listening driven by nostalgia?",
-    y = "Number of Students"
-  ) +
-  theme_minimal()
-```
+### Row 2 {.tabset} 
 
 
 
 ```{r}
 #| title: Energy
-ggplot(country_analysis, aes(x = reorder(Q7, avg_energy), y = avg_energy, fill = Q7)) +
-  geom_bar(stat = "identity", width = 0.7) +
-  coord_flip() +
-  
-  scale_fill_viridis_d(option = "mako", begin = 0.2, end = 0.8) +
-  
-  labs(title = "Average Energy Level by Country",
-       x = "Country",
-       y = "Mean Energy Score") +
-  
-  theme_minimal(base_family = "serif") + 
-  theme(
-    legend.position = "none",
-    text = element_text(family = "serif"),
-    plot.title = element_text(size = 18, face = "bold", margin = margin(b = 10)),
-    axis.title = element_text(size = 12, face = "italic"),
-    axis.text = element_text(size = 10),
-    plot.margin = margin(20, 20, 20, 20)
-  )
+plot_energy
 
 ```
 
 ```{r}
 #| title: Danceability
-ggplot(country_analysis, aes(x = reorder(Q7, avg_danceability), y = avg_danceability, fill = Q7)) +
-  geom_bar(stat = "identity", width = 0.7) +
-  coord_flip() +
-  scale_fill_viridis_d(option = "mako", begin = 0.2, end = 0.8) +
-  labs(title = "Average Danceability Level by Country",
-       x = "Country", y = "Mean Danceability Score") +
-  theme_minimal(base_family = "serif") + 
-  theme(
-    legend.position = "none",
-    text = element_text(family = "serif"),
-    plot.title = element_text(size = 18, face = "bold", margin = margin(b = 10)),
-    axis.title = element_text(size = 12, face = "italic"),
-    plot.margin = margin(20, 20, 20, 20)
-  )
+plot_danceability
 ```
 
 ```{r}
 #| title: Speachiness
-ggplot(country_analysis, aes(x = reorder(Q7, avg_speechiness), y = avg_speechiness, fill = Q7)) +
-  geom_bar(stat = "identity", width = 0.7) +
-  coord_flip() +
-  scale_fill_viridis_d(option = "mako", begin = 0.2, end = 0.8) +
-  labs(title = "Average Speechiness Level by Country",
-       x = "Country", y = "Mean Speechiness Score") +
-  theme_minimal(base_family = "serif") + 
+plot_speechiness
+```
+
+# Feelings Regulation
+
+
+## Column 1 {width=60%} {.academic-row}
+
+```{r}
+#| echo: false
+#| fig-align: center
+#| fig-width: 10
+#| fig-height: 6
+
+library(dplyr)
+library(fmsb)
+
+mean_home <- international_with_home %>%
+  mutate(across(Q17:Q21, \(x) as.numeric(gsub("[^0-9]", "", as.character(x))))) %>%
+  summarise(across(Q17:Q21, \(x) mean(x, na.rm = TRUE)))
+
+mean_no_home <- international_no_home %>%
+  mutate(across(Q17:Q21, \(x) as.numeric(gsub("[^0-9]", "", as.character(x))))) %>%
+  summarise(across(Q17:Q21, \(x) mean(x, na.rm = TRUE)))
+
+radar_data <- rbind(mean_home, mean_no_home)
+rownames(radar_data) <- c("Home Music", "No Home Music")
+
+max_min <- data.frame(
+  matrix(c(7, 7, 7, 7, 7,
+           1, 1, 1, 1, 1), nrow = 2, byrow = TRUE)
+)
+colnames(max_min) <- colnames(radar_data)
+
+final_radar <- rbind(max_min, radar_data)
+
+colnames(final_radar) <- c(
+  "Coping\nStrategy", "Memory\nTrigger", "Memory\nVividness",
+  "Loneliness\nReduction", "Mood\nImprovement"
+)
+
+pushed_labels <- c(
+  "Coping\nStrategy\n",
+  "Memory\nTrigger\n\n",
+  "\nNostalgia\nVividness",
+  "\nLoneliness\nReduction",
+  "Mood\nImprovement\n\n"
+)
+
+colors_border <- c("#DDA0DD", "#F1B6DA")
+colors_in <- c(scales::alpha("#DDA0DD", 0.35), scales::alpha("#F1B6DA", 0.15))
+
+op <- par(no.readonly = TRUE)
+par(mar = c(4, 5, 4, 5), family = "serif", xpd = TRUE)
+
+radarchart(
+  final_radar,
+  axistype = 1,
+  pcol = colors_border, pfcol = colors_in, plwd = 3, plty = 1,
+  cglcol = "grey85", cglty = 1,
+  axislabcol = "grey30",
+  caxislabels = seq(1, 7, 1),
+  seg = 6,
+  vlcex = 0.9,
+  title = "Psychological Impact on International Students: Home vs. Other Music",
+  vlabels = pushed_labels
+)
+
+legend(
+  x = "bottom",
+  legend = c("Home-Music Group", "Non-Home-Music Group"),
+  bty = "n", pch = 15, col = c("#DDA0DD", "#F1B6DA"),
+  text.col = "black", cex = 0.95, pt.cex = 1.4,
+  inset = c(0, -0.12),
+  horiz = TRUE
+)
+
+par(op)
+```
+**Home music influence on the international students** 
+  
+The radar chart illustrates how international students see home-country music as an 'emotional bridge' when living abroad. The data shows a clear gap: students including "music from home in their top 3” score higher across the board (from feeling less lonely to better managing the stress of a new environment). Because the purple shape surrounds the pink one completely, it proves that home-country music provides a total boost to mental well-being, rather than just helping in one specific area. 
+
+## Column 2 {width=40%}
+
+### Row 1 {.highlight-row}
+
+**Nostalgia and the songs**
+
+The data reveals almost the same emotional reactions between the two groups, which defies the assumption that homesickness would cause international students to feel noticeably more nostalgic. 
+
+The median nostalgia score for Dutch students (4.68) is slightly higher than that of international students (4.44), but the difference is statistically negligible. 
+
+This shows, being an international student does not automatically guarantee higher levels of musical nostalgia compared to locals. 
+
+
+### Row 2 {.tabset}
+
+
+```{r}
+#| title: Nostalgia
+
+#| echo: false
+#| fig-align: center
+#| fig-width: 10
+#| fig-height: 4.8
+# show more nostalgic feelings towards the music they listen to 
+
+# to test this scores on the questions Q18, Q19, 
+
+# creating dataframe of the relevant data 
+
+# first converting data from nominal to integer
+dutch_students<- dutch_students %>%
+  mutate(across(Q18:Q19, ~ as.integer(readr::parse_number(as.character(.)))))
+
+international_students<- international_students %>%
+  mutate(across(Q16:Q21, ~ as.integer(readr::parse_number(as.character(.)))))
+
+# dutch students
+q18_dutch <- dutch_students$Q18
+q19_dutch <- dutch_students$Q19
+
+mean_q18_dutch = mean(q18_dutch)
+
+
+mean_q19_dutch = mean(q19_dutch)
+
+
+mean_q18_q19_dutch = (mean_q18_dutch + mean_q19_dutch)/2
+
+
+# international students
+q18_international <- international_students$Q18
+q19_international <- international_students$Q19
+
+mean_18_international = mean(q18_international)
+
+
+mean_19_international = mean(q19_international)
+
+
+mean_q18_q19_international = (mean_18_international + mean_19_international)/2
+
+
+# so the mean of the dutch group is higher than the international group
+
+# calculating the mean
+
+q18_q19_dutch = q18_dutch + q19_dutch
+
+
+q18_q19_international = q18_international + q19_international
+
+
+sd_18_19_dutch = sd(q18_q19_dutch)
+
+
+sd_18_19_international = sd(q18_q19_international)
+
+
+q18_19_dutch_and_international = data.frame(
+  group = c('Dutch', 'International'),
+  mean = c(mean_q18_q19_dutch, mean_q18_q19_international),
+  sd = c(sd_18_19_dutch, sd_18_19_international)
+)
+
+
+# lonelyness and happyness ------------------------------------------------
+
+
+# can someone make a dataset in which the international students are
+# seperated on basis or they had at least one song that gave them 
+# from their home country
+
+# afterwards the mean of those in relation to q20 is calculated to decrease of lonelyness
+
+# mean of q21 and q17 to calculate inscrease in mood when listening to home country music
+
+
+
+# Making boxplot ----------------------------------------------------------
+
+library(ggplot2)
+
+
+# Compute min and max for plotting “box”
+q18_19_dutch_and_international$ymin <- q18_19_dutch_and_international$mean - q18_19_dutch_and_international$sd
+q18_19_dutch_and_international$ymax <- q18_19_dutch_and_international$mean + q18_19_dutch_and_international$sd
+q18_19_dutch_and_international$lower <- q18_19_dutch_and_international$mean - 0.5*q18_19_dutch_and_international$sd  # for box bottom
+q18_19_dutch_and_international$upper <- q18_19_dutch_and_international$mean + 0.5*q18_19_dutch_and_international$sd  # for box top
+q18_19_dutch_and_international$middle <- q18_19_dutch_and_international$mean
+
+
+ggplot(q18_19_dutch_and_international, aes(x = group, y = mean, fill = group)) +
+  geom_segment(aes(x=group, xend=group, y=ymin, yend=ymax), color="#9D174D") +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) + 
+  geom_boxplot(
+    aes(ymin = ymin, lower = lower, middle = middle, upper = upper, ymax = ymax),
+    stat = "identity", width = 0.5, color = "#9D174D"
+  ) +
+  geom_text(aes(y = middle, label = round(mean, 2)), family = "serif", size = 5, color = "white", fontface = "bold") +
+  scale_fill_manual(values = c("Dutch" = "#FF6F91", "International" = "#FF6F91")) +
+  scale_y_continuous(breaks = 1:7, limits = c(1, 8)) +
+  theme_bw(base_size = 15, base_family = "serif") + 
   theme(
     legend.position = "none",
-    text = element_text(family = "serif"),
-    plot.title = element_text(size = 18, face = "bold", margin = margin(b = 10)),
-    axis.title = element_text(size = 12, face = "italic"),
-    plot.margin = margin(20, 20, 20, 20)
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.caption = element_text(hjust = 0, size = 10, face = "italic"),
+    panel.grid = element_blank(), 
+    panel.border = element_rect(colour = "#9D174D", fill=NA, size=1.2) 
+  ) +
+  labs(title = "Nostalgic Feelings: Dutch vs International",
+       y = "Score (1-7)", x = "Group",
+       caption = "Note: Error bars represent ±1 standard deviation.\nSD for International (3.3) was slightly higher than Dutch (2.7)."
   )
+```
 
+```{r}
+#| title: Loneliness 
+# data cleaning for Q20, 21
+international_with_home<- international_with_home %>%
+  mutate(across(Q20:Q21, ~ as.integer(readr::parse_number(as.character(.)))))
+
+international_no_home<- international_no_home %>%
+  mutate(across(Q20:Q21, ~ as.integer(readr::parse_number(as.character(.)))))
+
+
+# calculate the mean of scores on question 20 for international students with at least one home country song and no home country songs
+international_with_home_mean_q20 = mean(international_with_home$Q20)
+
+international_no_home_mean_q20 = mean(international_no_home$Q20)
+
+
+international_no_home_var_q20 = var(international_no_home$Q20)
+
+
+international_with_home_var_q20 = var(international_with_home$Q20)
+
+
+# loneliness
+loneliness_data <- data.frame(
+  group = c("With home-songs", "Without home-songs"),
+  mean = c(international_with_home_mean_q20, international_no_home_mean_q20),
+  sd = c(sqrt(international_with_home_var_q20), sqrt(international_no_home_var_q20))
+)
+
+loneliness_data$ymin <- loneliness_data$mean - loneliness_data$sd
+loneliness_data$ymax <- loneliness_data$mean + loneliness_data$sd
+loneliness_data$lower <- loneliness_data$mean - 0.5 * loneliness_data$sd
+loneliness_data$upper <- loneliness_data$mean + 0.5 * loneliness_data$sd
+loneliness_data$middle <- loneliness_data$mean
+
+
+ggplot(loneliness_data, aes(x = group, y = mean, fill = group)) +
+  geom_segment(aes(x=group, xend=group, y=ymin, yend=ymax), color="#8C3A4A") +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) +
+  geom_boxplot(
+    aes(ymin = lower, lower = lower, middle = middle, upper = upper, ymax = upper),
+    stat = "identity", width = 0.5, color = "#8C3A4A"
+  ) +
+  geom_text(aes(y = middle, label = round(mean, 2)), family = "serif", size = 5, color = "white", fontface = "bold") +
+  scale_fill_manual(values = c("With home-songs" = "#E6A8B5", "Without home-songs" = "#E6A8B5")) +
+  scale_y_continuous(breaks = 1:7, limits = c(1, 7)) +
+  theme_bw(base_size = 15, base_family = "serif") +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    panel.grid = element_blank(),
+    panel.border = element_rect(colour = "#8C3A4A", fill=NA, size=1.2)
+  ) +
+  labs(title = "Influence of Home-Country Music on Loneliness in Internation Students", y = "Score (1-7)", x = "Group")
+```
+
+
+```{r}
+#| title: Mood
+# Next the influence of listening to home-country songs on mood is researched. 
+# again mean and var are calculated to get an impression of results
+
+international_with_home_mean_q21 = mean(international_with_home$Q21)
+
+international_no_home_mean_q21 = mean(international_no_home$Q21)
+
+
+international_no_home_var_q21 = var(international_no_home$Q21)
+
+international_with_home_var_q21 = var(international_with_home$Q21)
+
+
+mood_summary <- data.frame(
+  group = c("With home-songs", "Without home-songs"),
+  mean = c(international_with_home_mean_q21, international_no_home_mean_q21),
+  sd = c(sqrt(international_with_home_var_q21), sqrt(international_no_home_var_q21))
+)
+
+mood_summary$ymin <- mood_summary$mean - mood_summary$sd
+mood_summary$ymax <- mood_summary$mean + mood_summary$sd
+mood_summary$lower <- mood_summary$mean - 0.5 * mood_summary$sd
+mood_summary$upper <- mood_summary$mean + 0.5 * mood_summary$sd
+mood_summary$middle <- mood_summary$mean
+
+# creating boxplot of the influence of listening to home-based music on mood of international students
+
+
+ggplot(mood_summary, aes(x = group, y = mean, fill = group)) +
+  geom_segment(aes(x=group, xend=group, y=ymin, yend=ymax), color="#6A0572") +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2) +
+  geom_boxplot(
+    aes(ymin = lower, lower = lower, middle = middle, upper = upper, ymax = upper),
+    stat = "identity", width = 0.5, color = "#6A0572"
+  ) +
+  geom_text(aes(y = middle, label = round(mean, 2)), 
+            family = "serif", size = 5, color = "white", fontface = "bold") +
+  
+  scale_fill_manual(values = c("With home-songs" = "#F15BB5", "Without home-songs" = "#F15BB5")) +
+  scale_y_continuous(breaks = 1:7) +
+  coord_cartesian(ylim = c(1, 7)) + 
+  
+  theme_bw(base_size = 15, base_family = "serif") +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    panel.grid = element_blank(),
+    panel.border = element_rect(colour = "#6A0572", fill = NA, size = 1.2)
+  ) +
+  labs(
+    title = "Influence of Home-Country Music on Mood of International Students",
+    y = "Score (1-7)",
+    x = "Group"
+  )
 
 ```
 
-# Research
-
-## 
-**Methodology** 
-
-This project combines survey data and Spotify audio features to explore everyday music listening among students in the Netherlands. Students completed an online survey reporting demographic information, listening habits, and their top three most frequently played songs. Spotify audio features for these songs were collected and aggregated by computing mean values per respondent, creating an individual-level musical profile. The dataset was cleaned by standardizing country labels, removing non-essential metadata, and separating respondents into Dutch and international groups to enable comparative analysis. The study employs descriptive statistics and visualizations to identify patterns rather than test causal relationships.
 
 
 
 
-## 
-**Discussion** 
-
-The findings suggest clear differences in how music functions for Dutch and international students, particularly in the role of home-country music and the audio characteristics of preferred songs. International students appear more likely to rely on music connected to their cultural background, supporting the idea that music can serve as a tool for emotional regulation and cultural continuity in a new environment. Variations in Spotify audio features across countries further indicate that musical preferences reflect broader cultural and social contexts. While exploratory, these patterns highlight the value of combining self-reported data with audio features to better understand the everyday role of music in student life.
-
-##
 
 
-
-**Results**
-
-The analysis reveals notable differences in music listening patterns between Dutch and international students, as well as meaningful variation across countries of origin. International students show a stronger tendency to listen to music from their home country compared to Dutch students, with a substantially higher proportion of their top-ranked songs originating outside the Netherlands. In contrast, Dutch students predominantly listen to international music rather than domestic Dutch music. Country-level comparisons of Spotify audio features further highlight differences in musical preferences: average energy and danceability scores vary across countries, suggesting distinct listening styles that may reflect cultural norms or lifestyle factors. Speechiness also differs between countries, indicating varying preferences for music with spoken-word elements. When aggregated at the respondent level, these audio features form consistent musical profiles that complement self-reported survey responses. Overall, the results demonstrate that combining survey data with Spotify audio features provides a richer understanding of how everyday music listening differs between student groups and cultural backgrounds, revealing patterns that would be difficult to detect using self-reported measures alone.
+# Duration and Distance
 
 
+## Column 1 {width=60%} {.academic-row}
+
+```{r}
+# home_country song percentage and residency length
+
+international_home_music$Q8 <- international_students$Q8
+
+international_home_music <- international_home_music %>%
+  mutate(
+    Residency_Group = case_when(
+      Q8 %in% c("less than 3 months", "3–6 months", "6–12 months") ~ "Short-term (<1yr)",
+      Q8 %in% c("1–2 years", "more than 2 years") ~ "Long-term (>1yr)",
+      TRUE ~ NA_character_
+    )
+  )
+
+ggplot(international_home_music, aes(x = Residency_Group, fill = as.factor(home_val))) +
+  geom_bar(position = "fill", width = 0.5, color = "white", linewidth = 0.7) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  
+  scale_fill_manual(values = c("1" = "#5B4A72", "0" = "#D9827C"), 
+                    labels = c("1" = "Other", "0" = "Home Country"))  +
+  
+  theme_minimal(base_family = "serif") +
+  labs(
+    title = "Distribution of Music Origin by Residency Duration",
+    subtitle = "Comparison among international students: short-term vs. long-term stays in the Netherlands",
+    x = "Length of Stay in the Netherlands",
+    y = "Percentage of Total Songs",
+    fill = "Origin of music"
+  ) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, size = 11, color = "grey30"),
+    axis.title.x = element_blank(),
+    legend.position = "bottom",
+    axis.text = element_text(size = 10)
+  )
+
+```
+
+**Distribution of Music Origin by Residency Duration ** 
+  
+This graph shows a counter-intuitive trend where rather than declining, time spent overseas is associated with increasing frequency of listening to music from one's home country. 
+
+Long-term Residents, meaning students who have lived in the Netherlands for longer than a year dedicate approximately 35%, song choices to their home country. 
+
+Short-term Residents, as in the new arrivals, conversely, listen to very little music from home, dedicating only 10%. 
+
+This might show that new students might be eager to immerse themselves into the newer environment, while long-term residents eventually return to their musical roots for comfort. 
+
+## Column 2 {width=40%}
 
 
-# Survey & References 
+
+### Row 1 {.highlight-row}
+
+**Influence of the distance**
+
+This graph disproves the assumption that students from further away rely more heavily on home-country music. The p-value of 0.3 is well above the standard threshold 0.05, indicating that any observed pattern here is likely due to random chance rather than a true trend. 
+
+Nostalgia from music is not a geographical variable, rather it is an emotional variable. Simply being far from home would not trigger a retreat to home country music. 
+
+### Row 2
+
+```{r}
+library(tibble)
+library(ggpubr)
+
+dist_lookup <- tribble(
+  ~Q7,         ~KM,
+  "Italy",     1173, 
+  "Lithuania", 1244,
+  "Spain",     1552,
+  "Iran",      4394,
+  "Russia",    5397,
+  "Argentina", 11726,
+  "Germany",   336,
+  "Ukraine",   1875,
+  "Vietnam",   9388,
+  "Finland",   1751,
+  "India",     6963,
+  "Taiwan",    9477,
+  "China",     7572,
+  "Belgium",   187,
+  "Brazil",    9001,
+  "Czechia",   703,
+  "France",    450,
+  "Hungary",   1177,
+  "Lebanon",   3149,
+  "Slovakia",  1049,
+  "USA",       7456
+)
+
+international_home_music$Q7 <- international_students$Q7
+international_home_music$respondent_id <- international_students$respondent_id
+
+student_corr_data <- international_home_music %>%
+  group_by(respondent_id, Q7) %>% 
+  summarise(home_count = sum(home_val == 0, na.rm = TRUE), .groups = "drop") %>%
+  left_join(dist_lookup, by = "Q7") %>%
+  filter(!is.na(KM))
+
+ggplot(student_corr_data, aes(x = KM, y = home_count)) +
+  geom_jitter(width = 200, height = 0.15, color = "#DDA0DD", alpha = 0.6, size = 2.5) +
+
+  geom_smooth(method = "lm", color = "#F1B6DA", fill = "#F1B6DA", alpha = 0.2) +
+  stat_cor(method = "pearson", label.x = 6000, label.y = 3.1, 
+           family = "serif", fontface = "italic", size = 4) +
+  
+  scale_y_continuous(breaks = c(0, 1, 2, 3), limits = c(-0.2, 3.2)) +
+  scale_x_continuous(labels = scales::comma_format()) +
+  
+  labs(
+    title = "Correlation: Geographic Distance vs. Home Country Music Consumption",
+    x = "Approximate Distance from the Netherlands (km)",
+    y = "Number of Home Country Songs (out of 3) per respondent"
+  ) +
+  theme_minimal(base_family = "serif") +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5, size = 11, color = "grey30"),
+    axis.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank() 
+  )
+  
+```
+# Survey and Conclusions
+
+
+
+
+## Column 1
+
+<p style="text-align:center; font-weight:600; font-size:1.3em;">
+  Survey questionnaire
+</p>
+  
+  | №| Question |
+  |--------|----------|
+  | 1 | What is the country of your origin? (You may select the country you most strongly identify with culturally.) |
+  | 2 | How long have you been living in the Netherlands? |
+  | 3 | What is your gender? |
+  | 4 | Please list your Top 3 most-listened-to songs from 2025 (refer to your Spotify Wrapped, Apple Music Replay, or similar)|
+  | 5 | How would you classify each of these Top 3 songs in terms of origin? |
+  | 6 | To what extent is your listening to these Top 3 songs driven by nostalgia? |
+  | 7 | Since moving to the Netherlands, how has your frequency of listening to music from your home country changed? |
+  | 8 | When I feel homesick, I intentionally listen to music from my home country. |
+  | 9 | I use my home country’s music as a way to cope with homesickness. |
+  | 10 | Music from my home country brings back memories of home. |
+  | 11 | When music triggers these memories, they feel vivid and emotionally strong. |
+  | 12 | Music from my home country helps me feel less alone. |
+  | 13 | Listening to home country music improves my mood. |
+  
+## Column 2 {height=300}
+
+### Row 1 {height=270 .tabset}
+
+#### Netherlands
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/0Ys7mvapOQShMMUSasD6Ue?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+  
+#### Russia
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/1kDQ6wAlAh5K06wOzXEz6c?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+  
+#### Ukraine
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/1P9sBuRg5cggxtJIDOhhzQ?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+  
+#### Finland
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/3cg05g4spHIvw4MIxWAriQ?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+  
+#### Taiwan
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/0oyOctyLqZzry7LvmnPj32?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+  
+#### China
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/7oRSZFrbe9aIJRl7WEkRBr?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+  
+#### West Europe
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/4Djb3odGDbTCZrcWo3hVYH?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+
+#### East Europe
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/6KmpKMtaTm8acL1op28sxP?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+  
+#### South America
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/2vhdCoVUOJahUgYtsLPcn0?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+  
+  
+#### Asia
+  
+::: {=html}
+<iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/6DZeXAiYr4DCNawFYQEtwT?utm_source=generator" width="100%" height="200" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+:::
+ 
+### Row 2 
+#### Playlists
+
+**Spotify playlists**
+
+These are the playlists that were made according to each respondent's country of origin with the songs that they were listening.
+ Of course it cannot reflect the countries musical culture, but we think It is a nice opportunity to experience a musical life of different international students. 
+
+
+
+#### Fun facts 🎵 {.highlight-row}
+
+**Fun facts**
+
+- Lithuanian respondents were the only group whose top songs consisted entirely of music from their own country(based on 3 responses). It also holds for Italy and Spain in our research, but there were only 1 respondent per each of these countries. 
+- There was a Dutch response which consisted of 2 Japanese and 1 Chinese songs. 
+
+
+## Column 3
+
+**Conclusion**
+  
+Our research set out to determine whether international students use music to cling to the past or to integrate into their new future. The data reveals that the answer is not a simple binary, but a dynamic timeline of emotional regulation. 
+
+…. 
+
+ 
+
+In the end, international students do not choose between integration and nostalgia. Rather, they use music as a flexible, self-control mechanism. 

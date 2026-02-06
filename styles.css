@@ -1,0 +1,101 @@
+/* ===== Global dashboard font ===== */
+body {
+  font-family: "Inter", sans-serif;
+}
+
+/* ===== Highlighted row styling ===== */
+.highlight-row {
+  background-color: #fce4ec;
+  color: #2c3e50;
+  padding: 20px;
+  border-radius: 12px;
+  font-family: "Playfair Display", serif;
+  font-size: 1.1em;
+}
+
+/* Row title styling */
+.highlight-row h2 {
+  color: #c0392b;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* ===== Pastel academic box ===== */
+.academic-row {
+  background-color: #ede7f6;
+  color: #3e3a4d;
+  padding: 20px;
+  border-radius: 12px;
+  font-family: "Playfair Display", serif;
+  font-size: 1.1em;
+  border: 1px solid #d1c4e9;
+}
+
+/* Academic row heading */
+.academic-row h2,
+.academic-row h3 {
+  color: #5e548e;
+  font-weight: 700;
+}
+
+
+
+/* ===== Card styling ===== */
+.card {
+  border-radius: 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== Value box polish ===== */
+.value-box {
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+/* ===== Smooth hover effect ===== */
+.card:hover {
+  transform: translateY(-3px);
+  transition: 0.2s ease;
+}
+
+/* ===== Section spacing ===== */
+.quarto-dashboard-row {
+  margin-bottom: 20px;
+}
+
+.navbar {
+  background-color: #6b4c7a !important;
+}
+
+.navbar a,
+.navbar-brand {
+  color: white !important;
+}
+
+.navbar a:hover {
+  color: #fce4ec !important;
+}
+
+.tab-content {
+  background-color: #ede7f6;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #d1c4e9;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #ede7f6 !important;
+  border-color: #d1c4e9 !important;
+  color: #5e548e !important;
+}
+
+/* Inactive tab text = highlight pink */
+.nav-tabs .nav-link {
+  color: #c0392b !important;
+}
+section.level1 {
+  padding-top: 30px;
+  margin-top: 30px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+
